@@ -1,0 +1,17 @@
+declare -A arr
+total=0
+while read ip size; do
+  [[ -z $size ]] && break # empty or not correct input 
+  [[ $size = '-' ]] && continue # some bots download nothing
+  let "arr[$ip] += $size"
+  let "total += $size"
+done < <(cat $1 | cut -d ' ' -f 1,10) # cut ip and size fields
+# present the results:
+totalH=$(numfmt --to=iec-i --suffix=B --format="%.1f" $total)
+echo "There are ${#arr[@]} unique ips"
+echo "Total downloaded: $total ($totalH)"
+for ip in "${!arr[@]}"; do
+  # 1st column width 15 aligned left, 2nd - width 9 aligned rigth
+  printf '%-15s %9s\n' $ip ${arr["$ip"]}
+done | sort -t . -k1,1n -k2,2n -k3,3n -k4,4n | sort -rns -k2
+# sort by ip ascending and then by size descending
